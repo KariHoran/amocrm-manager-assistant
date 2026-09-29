@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ассистент менеджера · AmoCRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f2efe8;
+      --bg-elevated: #ffffff;
+      --bg-soft: #e8e3d9;
+      --text: #171a1c;
+      --text-muted: #5b636b;
+      --accent: #0c6b6b;
+      --accent-hover: #095555;
+      --accent-soft: rgba(12, 107, 107, 0.12);
+      --green-bg: #e7f5ee;
+      --green-border: #9dceb3;
+      --yellow-bg: #f8f1dc;
+      --yellow-border: #e0c97a;
+      --border: #d2cdc3;
+      --ok: #1f7a4c;
+      --warn: #9a6b00;
+      --danger: #a33b3b;
+      --shadow: 0 12px 40px rgba(23, 26, 28, 0.08);
+      --radius: 14px;
+      --font: "DM Sans", sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111417;
+        --bg-elevated: #1b1f24;
+        --bg-soft: #262b32;
+        --text: #ece8e1;
+        --text-muted: #9aa3ad;
+        --accent: #3cb8b0;
+        --accent-hover: #5ecdc6;
+        --accent-soft: rgba(60, 184, 176, 0.16);
+        --green-bg: #163126;
+        --green-border: #2f6b4d;
+        --yellow-bg: #322914;
+        --yellow-border: #7a6230;
+        --border: #333940;
+        --ok: #5dca8e;
+        --warn: #e0b34a;
+        --danger: #e07a7a;
+        --shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background:
+        radial-gradient(1100px 560px at 8% -12%, var(--accent-soft), transparent 55%),
+        radial-gradient(800px 420px at 100% 0%, rgba(154, 107, 0, 0.08), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
+    header.page { margin-bottom: 24px; }
+    header.page h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em; }
+    header.page p { margin: 6px 0 0; color: var(--text-muted); }
+
+    .panel {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+    input[type="text"], textarea {
+      width: 100%; font: inherit; color: var(--text); background: var(--bg-soft);
+      border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    textarea { min-height: 110px; resize: vertical; }
+    .field { margin-bottom: 14px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+    button {
+      font: inherit; font-weight: 600; border: none; border-radius: 10px;
+      padding: 11px 18px; cursor: pointer; transition: background .15s, transform .1s, opacity .15s;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--bg-soft); }
+    .btn-small { padding: 7px 12px; font-size: 0.82rem; }
+
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .examples > span { width: 100%; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; min-height: 28px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px;
+      font-size: 0.78rem; font-weight: 600; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .chip.mode-llm { color: var(--ok); }
+    .chip.mode-fallback { color: var(--warn); }
+    .chip.mode-no_match { color: var(--danger); }
+    .chip.topic { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+    .chip.sentiment-negative { color: var(--danger); }
+    .chip.sentiment-positive { color: var(--ok); }
+
+    .results { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 760px) { .results { grid-template-columns: 1fr; } }
+
+    .result-card {
+      border-radius: 12px; padding: 16px; display: flex; flex-direction: column; min-height: 210px; border: 1px solid;
+    }
+    .result-card.client { background: var(--green-bg); border-color: var(--green-border); }
+    .result-card.manager { background: var(--yellow-bg); border-color: var(--yellow-border); }
+    .result-card .card-head {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px;
+    }
+    .result-card h2 { margin: 0; font-size: 0.95rem; font-weight: 700; }
+    .result-body { flex: 1; white-space: pre-wrap; font-size: 0.95rem; }
+    .result-body.placeholder { color: var(--text-muted); font-style: italic; }
+
+    details.kb {
+      border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated);
+      box-shadow: var(--shadow); padding: 8px 18px 18px;
+    }
+    details.kb summary {
+      cursor: pointer; font-weight: 700; padding: 12px 0; list-style: none;
+    }
+    details.kb summary::-webkit-details-marker { display: none; }
+    details.kb summary::before { content: "▸"; margin-right: 8px; color: var(--accent); display: inline-block; transition: transform .15s; }
+    details.kb[open] summary::before { transform: rotate(90deg); }
+    #kbEditor {
+      width: 100%; min-height: 280px; font-family: var(--mono); font-size: 0.8rem;
+      line-height: 1.45; margin: 8px 0 12px;
+    }
+    .status { font-size: 0.85rem; color: var(--text-muted); }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+    .spinner {
+      width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; display: none; animation: spin .7s linear infinite;
+    }
+    .spinner.on { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; background: var(--bg-elevated);
+      border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 10px;
+      box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); pointer-events: none;
+      transition: opacity .2s, transform .2s; z-index: 50; font-size: 0.9rem;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="page">
+      <h1>Ассистент менеджера</h1>
+      <p>Готовый ответ клиенту и подсказка по допродажам на основе базы знаний</p>
+    </header>
+
+    <section class="panel">
+      <div class="field">
+        <label for="clientName">Имя клиента</label>
+        <input id="clientName" type="text" value="Анна" autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="message">Обращение клиента</label>
+        <textarea id="message" placeholder="Введите вопрос клиента… (Ctrl+Enter — сформировать)"></textarea>
+      </div>
+      <div class="row">
+        <button class="btn-primary" id="submitBtn" type="button">Сформировать</button>
+        <span class="spinner" id="spinner"></span>
+        <span class="status" id="requestStatus"></span>
+      </div>
+      <div class="examples">
+        <span>Примеры</span>
+        <button type="button" class="btn-ghost btn-small" data-example="delivery">Доставка + рассрочка</button>
+        <button type="button" class="btn-ghost btn-small" data-example="angry">Гарантия + недовольный</button>
+        <button type="button" class="btn-ghost btn-small" data-example="select">Подбор и допродажа</button>
+        <button type="button" class="btn-ghost btn-small" data-example="outside">Вопрос вне БЗ</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="meta" id="metaBar">
+        <span class="chip" id="modeChip">режим: —</span>
+        <span class="chip" id="sentimentChip">тональность: —</span>
+        <span class="chip" id="intentChip">intent: —</span>
+        <span class="chip" id="confChip">уверенность: —</span>
+      </div>
+      <div class="results">
+        <article class="result-card client">
+          <div class="card-head">
+            <h2>Ответ клиенту</h2>
+            <button type="button" class="btn-ghost btn-small" data-copy="reply">Копировать</button>
+          </div>
+          <div class="result-body placeholder" id="replyBox">Здесь появится ответ</div>
+        </article>
+        <article class="result-card manager">
+          <div class="card-head">
+            <h2>Подсказка менеджеру</h2>
+            <button type="button" class="btn-ghost btn-small" data-copy="upsell">Копировать</button>
+          </div>
+          <div class="result-body placeholder" id="upsellBox">Здесь появится подсказка</div>
+        </article>
+      </div>
+    </section>
+
+    <details class="kb" id="kbBlock">
+      <summary>База знаний</summary>
+      <textarea id="kbEditor" spellcheck="false"></textarea>
+      <div class="row">
+        <button type="button" class="btn-primary" id="saveKbBtn">Сохранить</button>
+        <span class="status" id="kbStatus"></span>
+      </div>
+    </details>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const EXAMPLES = {
+      delivery: "Подскажите, сколько стоит доставка холодильника за МКАД и можно ли оформить рассрочку на 12 месяцев?",
+      angry: "Это безобразие! Стиральная машина сломалась через месяц, гарантия вообще работает или вы всех обманываете?!",
+      select: "Нужна помощь подобрать посудомойку для семьи из 4 человек, бюджет около 50 тысяч — что возьмёте?",
+      outside: "Есть ли у вас услуга выгула собак и флористика к празднику?",
+    };
+    const MODE_LABELS = { llm: "LLM", fallback: "fallback", no_match: "нет совпадений" };
+    const SENT_LABELS = { neutral: "нейтральная", positive: "позитивная", negative: "негативная" };
+    const INTENT_LABELS = { buy: "покупка", question: "вопрос", complaint: "жалоба", other: "другое" };
+
+    const els = {
+      clientName: document.getElementById("clientName"),
+      message: document.getElementById("message"),
+      submitBtn: document.getElementById("submitBtn"),
+      spinner: document.getElementById("spinner"),
+      requestStatus: document.getElementById("requestStatus"),
+      metaBar: document.getElementById("metaBar"),
+      modeChip: document.getElementById("modeChip"),
+      sentimentChip: document.getElementById("sentimentChip"),
+      intentChip: document.getElementById("intentChip"),
+      confChip: document.getElementById("confChip"),
+      replyBox: document.getElementById("replyBox"),
+      upsellBox: document.getElementById("upsellBox"),
+      kbEditor: document.getElementById("kbEditor"),
+      saveKbBtn: document.getElementById("saveKbBtn"),
+      kbStatus: document.getElementById("kbStatus"),
+      toast: document.getElementById("toast"),
+    };
+
+    let lastResult = { reply: "", upsell_tip: "" };
+
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => els.toast.classList.remove("show"), 1800);
+    }
+
+    function setResult(data) {
+      lastResult = data;
+      const reply = data.reply || "";
+      const tip = data.upsell_tip || "";
+      els.replyBox.textContent = reply || "—";
+      els.upsellBox.textContent = tip || "—";
+      els.replyBox.classList.toggle("placeholder", !reply);
+      els.upsellBox.classList.toggle("placeholder", !tip);
+
+      const mode = data.mode || "—";
+      els.modeChip.textContent = "режим: " + (MODE_LABELS[mode] || mode);
+      els.modeChip.className = "chip mode-" + mode;
+
+      const sent = data.sentiment || "neutral";
+      els.sentimentChip.textContent = "тональность: " + (SENT_LABELS[sent] || sent);
+      els.sentimentChip.className = "chip sentiment-" + sent;
+
+      const intent = data.intent || "other";
+      els.intentChip.textContent = "intent: " + (INTENT_LABELS[intent] || intent);
+
+      const conf = typeof data.confidence === "number" ? Math.round(data.confidence * 100) + "%" : "—";
+      els.confChip.textContent = "уверенность: " + conf;
+
+      els.metaBar.querySelectorAll(".chip.topic").forEach((n) => n.remove());
+      (data.topics || []).forEach((topic) => {
+        const chip = document.createElement("span");
+        chip.className = "chip topic";
+        chip.textContent = topic;
+        els.metaBar.appendChild(chip);
+      });
+    }
+
+    async function assist() {
+      const client_name = els.clientName.value.trim();
+      const message = els.message.value.trim();
+      if (!message) {
+        els.requestStatus.textContent = "Введите обращение клиента";
+        els.requestStatus.className = "status err";
+        return;
+      }
+      els.submitBtn.disabled = true;
+      els.spinner.classList.add("on");
+      els.requestStatus.textContent = "Формируем…";
+      els.requestStatus.className = "status";
+      try {
+        const res = await fetch("/api/assist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ client_name, message, history: [] }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || ("Ошибка " + res.status));
+        }
+        setResult(await res.json());
+        els.requestStatus.textContent = "Готово";
+        els.requestStatus.className = "status ok";
+      } catch (err) {
+        els.requestStatus.textContent = err.message || "Ошибка запроса";
+        els.requestStatus.className = "status err";
+      } finally {
+        els.submitBtn.disabled = false;
+        els.spinner.classList.remove("on");
+      }
+    }
+
+    async function loadKb() {
+      try {
+        const res = await fetch("/api/kb");
+        els.kbEditor.value = JSON.stringify(await res.json(), null, 2);
+        els.kbStatus.textContent = "";
+      } catch {
+        els.kbStatus.textContent = "Не удалось загрузить БЗ";
+        els.kbStatus.className = "status err";
+      }
+    }
+
+    async function saveKb() {
+      els.kbStatus.textContent = "Сохраняем…";
+      els.kbStatus.className = "status";
+      try {
+        const parsed = JSON.parse(els.kbEditor.value);
+        if (!Array.isArray(parsed)) throw new Error("Ожидается JSON-массив");
+        const res = await fetch("/api/kb", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail ? JSON.stringify(data.detail) : "Ошибка сохранения";
+          throw new Error(detail);
+        }
+        els.kbStatus.textContent = "Сохранено (" + data.count + ")";
+        els.kbStatus.className = "status ok";
+        showToast("База знаний обновлена");
+      } catch (err) {
+        els.kbStatus.textContent = err.message || "Ошибка JSON";
+        els.kbStatus.className = "status err";
+      }
+    }
+
+    async function copyField(kind) {
+      const text = kind === "reply" ? lastResult.reply : lastResult.upsell_tip;
+      if (!text) { showToast("Нечего копировать"); return; }
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Скопировано ✓");
+      } catch {
+        showToast("Не удалось скопировать");
+      }
+    }
+
+    els.submitBtn.addEventListener("click", assist);
+    els.saveKbBtn.addEventListener("click", saveKb);
+    els.message.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        assist();
+      }
+    });
+    document.querySelectorAll("[data-example]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        els.message.value = EXAMPLES[btn.getAttribute("data-example")] || "";
+        assist();
+      });
+    });
+    document.querySelectorAll("[data-copy]").forEach((btn) => {
+      btn.addEventListener("click", () => copyField(btn.getAttribute("data-copy")));
+    });
+    document.getElementById("kbBlock").addEventListener("toggle", (e) => {
+      if (e.target.open && !els.kbEditor.value.trim()) loadKb();
+    });
+    loadKb();
+  </script>
+</body>
+</html>
